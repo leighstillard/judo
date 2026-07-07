@@ -280,7 +280,7 @@ impl Engine {
         }
 
         let mut hits: Vec<Hit> = Vec::new();
-        let mut push = |cat: &str, def: Level, ttl_def: Option<u64>, hits: &mut Vec<Hit>| {
+        let push = |cat: &str, def: Level, ttl_def: Option<u64>, hits: &mut Vec<Hit>| {
             let (level, source, ttl) = self.resolve(cat, def, ttl_def, agent_user, harness);
             hits.push(Hit { category: cat.to_string(), level, source, ttl_max_mins: ttl });
         };

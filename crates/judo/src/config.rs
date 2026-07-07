@@ -21,7 +21,7 @@ pub fn audit_path() -> PathBuf {
 }
 
 /// Persisted daemon identity + operator declarations (spec §4.3, §7.4).
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Identity {
     pub daemon_id: String,
     /// ed25519 secret key, 32 bytes base64. ponytail: 0600 file, no OS keychain in the

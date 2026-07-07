@@ -47,7 +47,7 @@ pub enum EnrollEvent {
 }
 
 /// Decrypted envelope body shown on the approval page (spec §7.1).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnvelopeBody {
     pub argv: Vec<String>,
     pub cwd: String,
