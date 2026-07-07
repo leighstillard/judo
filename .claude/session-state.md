@@ -10,6 +10,7 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 - #4 "Research: WebAuthn/passkeys in Rust" ✓ — asset `docs/research/webauthn-passkeys.md`. webauthn-rs Passkey flow, daemon-as-verifier/relay-as-page-host split is legal WebAuthn; rp_id judo.dev + allow_subdomains, immutable, off PSL; challenge→envelope TTL map (can't inject challenge bytes); KEY: "what you see is what you sign" — relay controls pixels, mitigate via command echo in notification (skeleton) / daemon-served page (hardening); synced passkeys → signCount=0.
 - #5 "Agent identity" ✓ (grilling) — tighten-only principle (forgeable signals never loosen policy); agent = Unix user (kernel-grade) + harness label (tighten/display/audit); declared humans bypass judo; unattributable = workspace baseline; cwd-shopping blocked by explicit `judo trust <dir>` + global hardline floor. CLI ticket #9 annotated with `judo trust` + `judo init` human declaration.
 - #6 "Approval lifecycle" ✓ (grilling) — approve-once or policy-capped category TTL ("always" only via judo.toml); 90 s timeout, deny ≠ timeout, timed-out envelopes late-approvable; retries coalesce, 10-min post-deny cooldown; local fallback = judo pending/approve/deny from declared-human login, agents fail closed; requester death = cancelled; judo revoke for TTL grants. State machine: pending → approved|denied|timed-out|cancelled. CLI ticket #9 annotated.
+- #7 "Approval protocol" ✓ (grilling) — envelopes E2E-encrypted (XChaCha20, key in URL fragment; relay content-blind); challenge minted per grant-choice (relay can't upgrade once→TTL); deny unauthenticated (fail-safe, POST-only); outbound WebSocket, daemon = ed25519 keypair from judo init; replay = single-use state/ids + expiry. Audit-log fog folded into spec ticket #10 (JSONL vs hash-chain decision annotated there).
 
 ## Key decisions made (during charting grill)
 
@@ -25,9 +26,9 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 ## The map
 
 - Map: [judo#1](https://github.com/leighstillard/judo/issues/1)
-- Frontier (open, unblocked): #7 protocol design (grilling — unblocked, blockers 4✓+6✓), #8 policy schema (grilling — unblocked, blockers 2✓+5✓)
-- Blocked: #9 CLI prototype (by 7,8) → #10 spec (by 3✓,7,8,9) → #11 skeleton (by 10)
-- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓
+- Frontier (open, unblocked): #8 policy schema (grilling — blockers 2✓+5✓)
+- Blocked: #9 CLI prototype (by 7✓,8) → #10 spec (by 3✓,7✓,8,9) → #11 skeleton (by 10)
+- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓, #7 protocol ✓
 - Conventions: `docs/agents/issue-tracker.md`
 
 ## Pending issues
@@ -36,4 +37,4 @@ None. Repo committed and pushed (branch `master`).
 
 ## What to pick up next
 
-`/wayfinder 7` (end-to-end approval protocol grilling) or `/wayfinder 8` (danger policy schema grilling). Both HITL, both now unblocked; they jointly unblock #9 CLI prototype.
+`/wayfinder 8` (danger policy schema grilling, HITL) — the only frontier ticket; closing it unblocks #9 CLI prototype, then #10 spec, then #11 skeleton. The route is now a straight line.
