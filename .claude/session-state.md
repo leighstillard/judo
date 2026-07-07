@@ -11,6 +11,7 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 - #5 "Agent identity" ✓ (grilling) — tighten-only principle (forgeable signals never loosen policy); agent = Unix user (kernel-grade) + harness label (tighten/display/audit); declared humans bypass judo; unattributable = workspace baseline; cwd-shopping blocked by explicit `judo trust <dir>` + global hardline floor. CLI ticket #9 annotated with `judo trust` + `judo init` human declaration.
 - #6 "Approval lifecycle" ✓ (grilling) — approve-once or policy-capped category TTL ("always" only via judo.toml); 90 s timeout, deny ≠ timeout, timed-out envelopes late-approvable; retries coalesce, 10-min post-deny cooldown; local fallback = judo pending/approve/deny from declared-human login, agents fail closed; requester death = cancelled; judo revoke for TTL grants. State machine: pending → approved|denied|timed-out|cancelled. CLI ticket #9 annotated.
 - #7 "Approval protocol" ✓ (grilling) — envelopes E2E-encrypted (XChaCha20, key in URL fragment; relay content-blind); challenge minted per grant-choice (relay can't upgrade once→TTL); deny unauthenticated (fail-safe, POST-only); outbound WebSocket, daemon = ed25519 keypair from judo init; replay = single-use state/ids + expiry. Audit-log fog folded into spec ticket #10 (JSONL vs hash-chain decision annotated there).
+- #10 "Design spec" ✓ (task) — docs/spec.md written: all eight closed tickets consolidated (threat model, architecture, identity, policy, lifecycle, protocol, sudo interception, WebAuthn, CLI §10, Channel trait §11, audit §12, skeleton scope §13, growth paths §14). Settled annotated decision: audit = plain JSONL (~/.local/state/judo/audit.jsonl), hash-chain as additive upgrade path with external anchoring. CLI prototype absorbed into §10 and deleted.
 - #9 "CLI surface prototype" ✓ (prototype) — accepted as prototyped: init/enroll/trust/untrust · daemon/status · classify/policy (top-level) · pending/approve/deny/revoke (declared humans only) · judo run fallback; init = one guided 4-step ceremony (identity → humans → relay pairing → passkey QR); no --force/--yes anywhere. Asset: docs/prototypes/cli-surface.md (feeds spec CLI section verbatim, then absorbed/deleted).
 - #8 "Danger policy schema" ✓ (grilling) — ladder = allow/notify/approve/deny + compiled-in hardline floor (not expressible in config); built-in stable-ID taxonomy (Hermes corpus seed) + custom categories; strictest-wins across matches on normalized command; layers global (~/.config/judo, floor=true flags) → workspace judo.toml → [agents.<unix-user>] loosen/tighten + [harness.<label>] tighten-only, floors clamped last; unmatched = tunable `default`, ships approve; malformed layer dropped whole → shipped defaults + alert; floor-flagged policy.write gates policy-file writes. CLI ticket #9 annotated with `judo classify` + `judo status` dropped-layer surfacing.
 
@@ -28,9 +29,8 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 ## The map
 
 - Map: [judo#1](https://github.com/leighstillard/judo/issues/1)
-- Frontier (open, unblocked): #10 "Write the judo design spec" (task — all blockers 3✓,7✓,8✓,9✓ closed; annotated with audit-log section JSONL vs hash-chained decision)
-- Blocked: #11 skeleton (by 10)
-- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓, #7 protocol ✓, #8 policy schema ✓, #9 CLI prototype ✓
+- Frontier (open, unblocked): #11 "Build the walking skeleton" — the LAST ticket. Scope fixed in spec §13; exit test defined there.
+- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓, #7 protocol ✓, #8 policy schema ✓, #9 CLI prototype ✓, #10 spec ✓
 - Conventions: `docs/agents/issue-tracker.md`
 
 ## Pending issues
@@ -39,4 +39,4 @@ None. Repo committed and pushed (branch `master`).
 
 ## What to pick up next
 
-`/wayfinder 10` (write the design spec — all decisions made, all inputs closed; this map carries execution per its Notes). Then #11 walking skeleton, and the map is done.
+`/wayfinder 11` (build the walking skeleton — implement docs/spec.md §13: Python sudo approval plugin → Rust daemon → minimal relay → ntfy → passkey; exit test in §13). Closing it completes the map.
