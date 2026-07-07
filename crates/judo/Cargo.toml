@@ -1,0 +1,36 @@
+[package]
+name = "judo"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "judo"
+path = "src/main.rs"
+
+[dependencies]
+judo-proto = { path = "../judo-proto" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = "0.24"
+futures-util = { workspace = true }
+base64 = { workspace = true }
+ulid = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+toml = "0.8"
+regex = "1"
+chacha20poly1305 = "0.10"
+rand = "0.8"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
+webauthn-rs-proto = "0.5"
+url = "2"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+dirs = "5"
+qrcode = "0.14"
+unicode-normalization = "0.1"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"
