@@ -169,7 +169,8 @@ impl Manager {
         let (ciphertext_b64, fragment_key_b64) = crypto::seal(&body)?;
         let now = now_unix();
         let expires_unix = now + timeout_secs;
-        let link = format!("https://approve.judo.dev/a/{id}#{fragment_key_b64}");
+        let origin = approval_origin();
+        let link = format!("{origin}/a/{id}#{fragment_key_b64}");
         let text = format!("judo approval: {}\n{}", body.summary, link);
         let (tx, rx) = oneshot::channel();
 
@@ -931,6 +932,13 @@ fn now_unix() -> u64 {
         .as_secs()
 }
 
+fn approval_origin() -> String {
+    std::env::var("JUDO_RP_ORIGIN")
+        .unwrap_or_else(|_| "https://approve.judo.dev".to_string())
+        .trim_end_matches('/')
+        .to_string()
+}
+
 fn username_for_uid(uid: u32) -> Option<String> {
     let passwd = fs::read_to_string("/etc/passwd").ok()?;
     passwd.lines().find_map(|line| {
@@ -969,4 +977,52 @@ fn sniff_harness(peer_pid: Option<u32>) -> Option<String> {
         pid = ppid;
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_support;
+
+    fn coalesce_key() -> CoalesceKey {
+        CoalesceKey {
+            digest: "digest".to_string(),
+            uid: 1001,
+            workspace: "/tmp".to_string(),
+        }
+    }
+
+    fn envelope_body() -> EnvelopeBody {
+        EnvelopeBody {
+            argv: vec!["echo".to_string(), "hi".to_string()],
+            cwd: "/tmp".to_string(),
+            runas: "root".to_string(),
+            uid: 1001,
+            agent_user: "agent".to_string(),
+            harness: None,
+            workspace: "/tmp".to_string(),
+            summary: "agent wants echo hi".to_string(),
+            categories: vec!["sudo.exec".to_string()],
+            ttl_offer: None,
+        }
+    }
+
+    #[test]
+    fn approval_link_uses_rp_origin_from_env() {
+        let _guard = test_support::env_lock().lock().expect("env lock poisoned");
+        std::env::set_var("JUDO_RP_ORIGIN", "https://judo.stillard.com");
+
+        let mut manager = Manager::new();
+        let result = manager
+            .begin_approval(coalesce_key(), envelope_body(), "echo hi".to_string(), 30)
+            .expect("begin approval");
+        let StartResult::Wait(plan) = result else {
+            panic!("expected wait plan");
+        };
+        let created = plan.created.expect("created envelope");
+
+        assert!(created.link.starts_with("https://judo.stillard.com/a/"));
+
+        std::env::remove_var("JUDO_RP_ORIGIN");
+    }
 }
