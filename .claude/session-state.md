@@ -11,6 +11,7 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 - #5 "Agent identity" ✓ (grilling) — tighten-only principle (forgeable signals never loosen policy); agent = Unix user (kernel-grade) + harness label (tighten/display/audit); declared humans bypass judo; unattributable = workspace baseline; cwd-shopping blocked by explicit `judo trust <dir>` + global hardline floor. CLI ticket #9 annotated with `judo trust` + `judo init` human declaration.
 - #6 "Approval lifecycle" ✓ (grilling) — approve-once or policy-capped category TTL ("always" only via judo.toml); 90 s timeout, deny ≠ timeout, timed-out envelopes late-approvable; retries coalesce, 10-min post-deny cooldown; local fallback = judo pending/approve/deny from declared-human login, agents fail closed; requester death = cancelled; judo revoke for TTL grants. State machine: pending → approved|denied|timed-out|cancelled. CLI ticket #9 annotated.
 - #7 "Approval protocol" ✓ (grilling) — envelopes E2E-encrypted (XChaCha20, key in URL fragment; relay content-blind); challenge minted per grant-choice (relay can't upgrade once→TTL); deny unauthenticated (fail-safe, POST-only); outbound WebSocket, daemon = ed25519 keypair from judo init; replay = single-use state/ids + expiry. Audit-log fog folded into spec ticket #10 (JSONL vs hash-chain decision annotated there).
+- #8 "Danger policy schema" ✓ (grilling) — ladder = allow/notify/approve/deny + compiled-in hardline floor (not expressible in config); built-in stable-ID taxonomy (Hermes corpus seed) + custom categories; strictest-wins across matches on normalized command; layers global (~/.config/judo, floor=true flags) → workspace judo.toml → [agents.<unix-user>] loosen/tighten + [harness.<label>] tighten-only, floors clamped last; unmatched = tunable `default`, ships approve; malformed layer dropped whole → shipped defaults + alert; floor-flagged policy.write gates policy-file writes. CLI ticket #9 annotated with `judo classify` + `judo status` dropped-layer surfacing.
 
 ## Key decisions made (during charting grill)
 
@@ -26,9 +27,9 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 ## The map
 
 - Map: [judo#1](https://github.com/leighstillard/judo/issues/1)
-- Frontier (open, unblocked): #8 policy schema (grilling — blockers 2✓+5✓)
-- Blocked: #9 CLI prototype (by 7✓,8) → #10 spec (by 3✓,7✓,8,9) → #11 skeleton (by 10)
-- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓, #7 protocol ✓
+- Frontier (open, unblocked): #9 CLI prototype (prototype, HITL — blockers 7✓+8✓; annotated: judo trust/init/pending/approve/deny/revoke/classify/status)
+- Blocked: #10 spec (by 3✓,7✓,8✓,9) → #11 skeleton (by 10)
+- Closed: #2 Hermes ✓, #3 sudo interception ✓, #4 WebAuthn ✓, #5 agent identity ✓, #6 lifecycle ✓, #7 protocol ✓, #8 policy schema ✓
 - Conventions: `docs/agents/issue-tracker.md`
 
 ## Pending issues
@@ -37,4 +38,4 @@ None. Repo committed and pushed (branch `master`).
 
 ## What to pick up next
 
-`/wayfinder 8` (danger policy schema grilling, HITL) — the only frontier ticket; closing it unblocks #9 CLI prototype, then #10 spec, then #11 skeleton. The route is now a straight line.
+`/wayfinder 9` (CLI surface prototype, HITL) — all grilling done; #9 is the only frontier ticket. Then #10 spec, then #11 skeleton.
