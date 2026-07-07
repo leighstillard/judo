@@ -4,7 +4,9 @@
 
 Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charted and first ticket resolved. Repo: https://github.com/leighstillard/judo (public), map + tickets on GitHub Issues with native sub-issue and blocked-by wiring.
 
-**Resolved this session:** ticket #2 "Research: Hermes approval subsystem" — closed with resolution comment; asset at `docs/research/hermes-approval-subsystem.md`; map's Decisions-so-far updated. Key takeaways: adopt Hermes' hardline floor / normalization pipeline / once-session-always category approvals / timeout≠deny / fail-closed unattended / policy self-protection; seed judo categories from its ~72-pattern corpus; its cooperative trust model is the argument FOR judo's real-broker stance.
+**Resolved so far:**
+- #2 "Research: Hermes approval subsystem" ✓ — asset `docs/research/hermes-approval-subsystem.md`. Adopt hardline floor / normalization / once-session-always / timeout≠deny / fail-closed unattended / policy self-protection; its cooperative trust model argues FOR judo's real-broker stance.
+- #3 "Research: sudo interception mechanisms" ✓ — asset `docs/research/sudo-interception.md`. Gate = sudo 1.9 approval plugin (sees command, true deny, fires under NOPASSWD); skeleton prototypes it via sudo's Python plugin; spec layers plugin + judo PAM module ("judo IS the credential"). CRITICAL: sudo-rs (Ubuntu 25.10+, no plugin API) makes PAM the only universal gate — central platform tension for the spec.
 
 ## Key decisions made (during charting grill)
 
@@ -20,9 +22,9 @@ Wayfinder map for **judo** (passkey-gated privilege broker for AI agents) charte
 ## The map
 
 - Map: [judo#1](https://github.com/leighstillard/judo/issues/1)
-- Frontier (open, unblocked): #3 sudo interception research, #4 WebAuthn/relay research, #5 agent identity (grilling), #6 approval lifecycle (grilling)
-- Blocked: #7 protocol (by 4,6) → #8 policy schema (by 2✓,5) → #9 CLI prototype (by 7,8) → #10 spec (by 3,7,8,9) → #11 skeleton (by 10)
-- Closed: #2 Hermes research ✓
+- Frontier (open, unblocked): #4 WebAuthn/relay research (AFK), #5 agent identity (grilling), #6 approval lifecycle (grilling)
+- Blocked: #7 protocol (by 4,6) → #8 policy schema (by 2✓,5) → #9 CLI prototype (by 7,8) → #10 spec (by 3✓,7,8,9) → #11 skeleton (by 10)
+- Closed: #2 Hermes research ✓, #3 sudo interception ✓
 - Conventions: `docs/agents/issue-tracker.md`
 
 ## Pending issues
@@ -31,4 +33,4 @@ None. Repo committed and pushed (branch `master`).
 
 ## What to pick up next
 
-`/wayfinder 1` — next frontier ticket in order is #3 (sudo interception research, AFK). #4 is also AFK and parallelizable; #5/#6 are HITL grillings when the user is present.
+`/wayfinder 1` — next frontier ticket in order is #4 (WebAuthn/passkeys in Rust + relay RP design, AFK). #5/#6 are HITL grillings when the user is present.
