@@ -626,13 +626,53 @@ async fn require_human_peer(state: &AppState, peer_uid: Option<u32>) -> Result<S
 }
 
 async fn relay_loop(state: AppState) {
+    let mut backoff = RelayBackoff::new();
+    let mut failure_reported = false;
+
     loop {
         if let Err(err) = relay_once(state.clone()).await {
-            state.relay_connected.store(false, Ordering::Relaxed);
+            let was_connected = state.relay_connected.swap(false, Ordering::Relaxed);
             *state.relay_tx.write().await = None;
-            eprintln!("relay disconnected: {err:#}");
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            if was_connected {
+                backoff.reset();
+                failure_reported = false;
+            }
+
+            let delay = backoff.next_delay();
+            if !failure_reported {
+                eprintln!(
+                    "relay disconnected: {err:#}; retrying in {}s",
+                    delay.as_secs()
+                );
+                failure_reported = true;
+            }
+            tokio::time::sleep(delay).await;
         }
+    }
+}
+
+struct RelayBackoff {
+    next: Duration,
+}
+
+impl RelayBackoff {
+    const INITIAL: Duration = Duration::from_secs(2);
+    const MAX: Duration = Duration::from_secs(15);
+
+    fn new() -> Self {
+        Self {
+            next: Self::INITIAL,
+        }
+    }
+
+    fn next_delay(&mut self) -> Duration {
+        let delay = self.next;
+        self.next = self.next.saturating_mul(2).min(Self::MAX);
+        delay
+    }
+
+    fn reset(&mut self) {
+        self.next = Self::INITIAL;
     }
 }
 
@@ -1015,5 +1055,28 @@ mod tests {
         let created = plan.created.expect("created envelope");
 
         assert!(created.link.starts_with("https://judo.stillard.com/a/"));
+    }
+
+    #[test]
+    fn relay_backoff_doubles_until_cap() {
+        let mut backoff = RelayBackoff::new();
+
+        assert_eq!(backoff.next_delay(), Duration::from_secs(2));
+        assert_eq!(backoff.next_delay(), Duration::from_secs(4));
+        assert_eq!(backoff.next_delay(), Duration::from_secs(8));
+        assert_eq!(backoff.next_delay(), Duration::from_secs(15));
+        assert_eq!(backoff.next_delay(), Duration::from_secs(15));
+    }
+
+    #[test]
+    fn relay_backoff_reset_returns_to_initial_delay() {
+        let mut backoff = RelayBackoff::new();
+
+        assert_eq!(backoff.next_delay(), Duration::from_secs(2));
+        assert_eq!(backoff.next_delay(), Duration::from_secs(4));
+
+        backoff.reset();
+
+        assert_eq!(backoff.next_delay(), Duration::from_secs(2));
     }
 }
