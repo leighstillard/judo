@@ -36,12 +36,10 @@ You run this on your dev box with your phone. `judo.stillard.com` is the WebAuth
   # note the printed https://<random>.trycloudflare.com host and use THAT as RP id below
   ```
 
-Set the RP env vars to match your tunnel host (all three processes below inherit them):
-```bash
-export JUDO_RP_ID=judo.stillard.com
-export JUDO_RP_ORIGIN=https://judo.stillard.com
-# (quick-tunnel: use the trycloudflare host for both, ID without scheme)
-```
+**No env vars needed.** The relay WebSocket URL you enter at `judo init` (step 3) is the
+single source of truth: its host becomes the WebAuthn `rp_id`, the approval-page origin,
+and the enroll-QR target. Point the tunnel at `judo.stillard.com` and enter
+`wss://judo.stillard.com/daemon` at init — everything follows from that.
 
 ---
 
@@ -129,7 +127,8 @@ If all six hold, the skeleton is proven and ticket #11 is done.
 - **Hand-rolled page crypto**: the approval page decrypts the envelope with an inlined
   XChaCha20-Poly1305 (verified correct against a live daemon envelope). Swap in
   `noble-ciphers` before any real deployment.
-- **`rp_id` is now env-driven** for this test; a real deployment pins it in config and
-  never changes it (passkeys would orphan).
+- **`rp_id` is derived from the relay URL host** — one input at `init` drives rp_id, the
+  approval-page origin, and the enroll QR. Keep the relay host stable across sessions or
+  enrolled passkeys orphan (they bind to rp_id).
 - Relay `Hello` trusts the claimed daemon key (skeleton); production verifies an ed25519
   challenge (spec §7.4).
