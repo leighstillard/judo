@@ -56,28 +56,37 @@ cargo build --workspace
 ./target/debug/judo-relay --listen 127.0.0.1:8787
 ```
 Point your tunnel (step 0) at `http://127.0.0.1:8787`. Confirm
-`https://judo.stillard.com/enroll` loads on your phone before continuing.
+`https://judo.stillard.com/enroll` loads on your phone before continuing. The relay MUST
+be listening before the tunnel can reach it (a `connection refused` in the cloudflared
+log means it isn't up yet).
 
-## 3. Initialise + enrol a passkey (terminal 2)
+## 3. Initialise (terminal 2)
 
 ```bash
 ./target/debug/judo init
 ```
 - Declared human login: **your** username (NOT `agentbot`).
-- Relay URL: `wss://judo.stillard.com/daemon` (the tunnel forwards WS too), or
-  `ws://127.0.0.1:8787/daemon` if you run the daemon on the same box as the relay and
-  only the *page* needs to be public.
+- Relay URL: **`wss://judo.stillard.com/daemon`** — it MUST be `wss://` (not `ws://`): the
+  tunnel is HTTPS, so the derived page origin must be `https://` or WebAuthn rejects the
+  origin mismatch, and the daemon's own WebSocket needs `wss://` through the tunnel.
 - ntfy topic: any unique string; subscribe to it in the ntfy app on your phone
   (or watch the daemon stdout — the skeleton also prints the push).
-- A QR appears. Scan it → the enroll page opens on `judo.stillard.com` → create the
-  passkey with Face ID / fingerprint.
 
-## 4. Run the daemon (terminal 2)
+`init` prints the enroll QR and saves identity. **Do not scan/enrol yet** — enrolment
+needs the daemon running (next step).
+
+## 4. Run the daemon, THEN enrol (terminal 2)
 
 ```bash
 ./target/debug/judo daemon
 ```
-`judo status` (terminal 3) should show the relay **connected** and 1 passkey.
+Confirm with `judo status` (terminal 3) that the relay shows **connected** — the enrol
+button calls the relay, which forwards to the connected daemon to mint the passkey
+challenge. With no daemon connected the button silently fails.
+
+**Now** scan the QR (or reload `https://judo.stillard.com/enroll`) → tap **Enroll
+passkey** → authenticate with Face ID / fingerprint. `judo status` should then show 1
+passkey.
 
 ## 5. Make the agent user hit sudo, and gate it with the plugin
 
