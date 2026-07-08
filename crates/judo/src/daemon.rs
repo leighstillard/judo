@@ -91,6 +91,7 @@ struct Manager {
     envelopes: HashMap<String, Envelope>,
     by_key: HashMap<CoalesceKey, String>,
     cooldowns: HashMap<CoalesceKey, Instant>,
+    approval_origin: String,
 }
 
 struct CreatedEnvelope {
@@ -119,12 +120,14 @@ enum ResolveOutcome {
 }
 
 impl Manager {
-    fn new() -> Self {
-        Self {
+    fn new(relay_url: &str) -> Result<Self> {
+        let (_, approval_origin) = config::rp_from_relay(relay_url)?;
+        Ok(Self {
             envelopes: HashMap::new(),
             by_key: HashMap::new(),
             cooldowns: HashMap::new(),
-        }
+            approval_origin,
+        })
     }
 
     fn begin_approval(
@@ -169,8 +172,7 @@ impl Manager {
         let (ciphertext_b64, fragment_key_b64) = crypto::seal(&body)?;
         let now = now_unix();
         let expires_unix = now + timeout_secs;
-        let origin = approval_origin();
-        let link = format!("{origin}/a/{id}#{fragment_key_b64}");
+        let link = format!("{}/a/{id}#{fragment_key_b64}", self.approval_origin);
         let text = format!("judo approval: {}\n{}", body.summary, link);
         let (tx, rx) = oneshot::channel();
 
@@ -297,12 +299,14 @@ pub async fn run() -> Result<()> {
 }
 
 pub async fn run_with_identity(identity: Identity) -> Result<()> {
+    let webauthn = WebauthnVerifier::new(&identity.relay_url)?;
+    let manager = Manager::new(&identity.relay_url)?;
     let state = AppState {
         identity: Arc::new(Mutex::new(identity)),
-        manager: Arc::new(Mutex::new(Manager::new())),
+        manager: Arc::new(Mutex::new(manager)),
         relay_tx: Arc::new(RwLock::new(None)),
         relay_connected: Arc::new(AtomicBool::new(false)),
-        webauthn: WebauthnVerifier::new()?,
+        webauthn,
         auth_states: Arc::new(Mutex::new(HashMap::new())),
         enroll_states: Arc::new(Mutex::new(HashMap::new())),
     };
@@ -932,13 +936,6 @@ fn now_unix() -> u64 {
         .as_secs()
 }
 
-fn approval_origin() -> String {
-    std::env::var("JUDO_RP_ORIGIN")
-        .unwrap_or_else(|_| "https://approve.judo.dev".to_string())
-        .trim_end_matches('/')
-        .to_string()
-}
-
 fn username_for_uid(uid: u32) -> Option<String> {
     let passwd = fs::read_to_string("/etc/passwd").ok()?;
     passwd.lines().find_map(|line| {
@@ -982,7 +979,6 @@ fn sniff_harness(peer_pid: Option<u32>) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support;
 
     fn coalesce_key() -> CoalesceKey {
         CoalesceKey {
@@ -1008,11 +1004,8 @@ mod tests {
     }
 
     #[test]
-    fn approval_link_uses_rp_origin_from_env() {
-        let _guard = test_support::env_lock().lock().expect("env lock poisoned");
-        std::env::set_var("JUDO_RP_ORIGIN", "https://judo.stillard.com");
-
-        let mut manager = Manager::new();
+    fn approval_link_uses_origin_from_relay_url() {
+        let mut manager = Manager::new("wss://judo.stillard.com/daemon").unwrap();
         let result = manager
             .begin_approval(coalesce_key(), envelope_body(), "echo hi".to_string(), 30)
             .expect("begin approval");
@@ -1022,7 +1015,5 @@ mod tests {
         let created = plan.created.expect("created envelope");
 
         assert!(created.link.starts_with("https://judo.stillard.com/a/"));
-
-        std::env::remove_var("JUDO_RP_ORIGIN");
     }
 }

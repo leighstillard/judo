@@ -90,7 +90,8 @@ fn init() -> Result<()> {
 
     let mut enroll_key = [0u8; 32];
     rng.fill_bytes(&mut enroll_key);
-    let enroll_url = format!("https://judo.dev/enroll#{}", STANDARD.encode(enroll_key));
+    let (_, origin) = config::rp_from_relay(&relay_url)?;
+    let enroll_url = format!("{origin}/enroll#{}", STANDARD.encode(enroll_key));
     let code = QrCode::new(enroll_url.as_bytes())?;
     println!("{}", code.render::<unicode::Dense1x2>().build());
     println!("Enroll first passkey: {enroll_url}");
