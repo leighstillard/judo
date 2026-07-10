@@ -90,6 +90,13 @@ passkey.
 
 ## 5. Make the agent user hit sudo, and gate it with the plugin
 
+> **⚠️ Lockout warning.** The plugin is **fail-closed**: if it can't reach the daemon
+> (daemon down, socket gone), it **denies** — and once registered in `/etc/sudo.conf` it
+> gates *every* user's sudo, including yours. Your own (declared-human) sudo is allowed
+> instantly *while the daemon runs*, but if the daemon dies you lose sudo box-wide. Before
+> editing `/etc/sudo.conf`, **keep a root shell open in a spare terminal** (`sudo -i`) so
+> you can always delete the Plugin line and recover. Remove it when the test is done.
+
 Install the approval plugin so `agentbot`'s sudo routes through judo. As root, add to
 `/etc/sudo.conf`:
 ```
@@ -130,9 +137,10 @@ If all six hold, the skeleton is proven and ticket #11 is done.
 
 ## Notes / known skeleton edges (spec-tracked, not bugs)
 
-- **ntfy** is stubbed to a stdout/log push in the skeleton; the phone notification arrives
-  via the ntfy app subscription or you read the link from the daemon log. Real push is the
-  §11 channel work.
+- **ntfy is fully stubbed** — `notify()` only prints `judo push [topic]: …` to the daemon
+  stdout and audits it; it never contacts ntfy, *regardless of the topic you set*. So no
+  phone push arrives in the skeleton — you read the approval link from the **daemon log**
+  and open it on your phone. Real push delivery is the §11 channel work.
 - **Hand-rolled page crypto**: the approval page decrypts the envelope with an inlined
   XChaCha20-Poly1305 (verified correct against a live daemon envelope). Swap in
   `noble-ciphers` before any real deployment.

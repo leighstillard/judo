@@ -85,7 +85,9 @@ fn init() -> Result<()> {
     let daemon_id = ulid::Ulid::new().to_string();
     let default_user = std::env::var("USER").unwrap_or_else(|_| "human".to_string());
     let humans = prompt("Declared human login(s), comma separated", &default_user)?;
-    let relay_url = prompt("Relay WebSocket URL", "ws://127.0.0.1:8787/daemon")?;
+    // ponytail: default is the tunnel form (portless wss); the tunnel publishes on 443
+    // and forwards to the local relay's :8787. Local headless smoke: type ws://127.0.0.1:8787/daemon.
+    let relay_url = prompt("Relay WebSocket URL", "wss://YOUR-TUNNEL-HOST/daemon")?;
     let ntfy_topic = prompt("ntfy topic (use 'log' for local smoke)", "log")?;
 
     let mut enroll_key = [0u8; 32];
